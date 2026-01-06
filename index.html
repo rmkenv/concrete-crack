@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concrete Crack Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #dee2e6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #videoElement, #canvas {
+            width: 100%;
+            display: block;
+        }
+
+        #canvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card h3 {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-card p {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .detection-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .detection-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detection-item strong {
+            color: #667eea;
+        }
+
+        .gps-status {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .gps-status.active {
+            border-left: 4px solid #28a745;
+        }
+
+        .gps-status.inactive {
+            border-left: 4px solid #dc3545;
+        }
+
+        .severity-high {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .severity-medium {
+            color: #ffc107;
+            font-weight: 700;
+        }
+
+        .severity-low {
+            color: #28a745;
+            font-weight: 700;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-selector button {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .upload-area:hover {
+            background: #f8f9fa;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gps-points-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .gps-point-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Concrete Crack Detection System</h1>
+            <p>Real-time crack detection with size calculation and GPS logging</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Left Panel: Video/Image and Controls -->
+            <div class="panel">
+                <h2>📹 Detection Interface</h2>
+
+                <div class="mode-selector">
+                    <button onclick="switchMode('camera')" id="cameraModeBtn">Camera Mode</button>
+                    <button onclick="switchMode('upload')" id="uploadModeBtn" class="btn-secondary">Upload Mode</button>
+                </div>
+
+                <div id="cameraMode" style="display: block;">
+                    <div class="video-container">
+                        <video id="videoElement" autoplay playsinline></video>
+                    </div>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <button onclick="toggleDetection()" id="toggleBtn">Start Detection</button>
+                </div>
+
+                <div id="uploadMode" style="display: none;">
+                    <div class="upload-area" onclick="document.getElementById('imageUpload').click()">
+                        <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                        <p style="font-size: 1.2em; color: #667eea;">📁 Click to upload image</p>
+                        <p style="color: #6c757d; margin-top: 10px;">Supports JPG, PNG formats</p>
+                    </div>
+                    <canvas id="uploadCanvas" style="margin-top: 20px;"></canvas>
+                    <button onclick="analyzeUploadedImage()" id="analyzeBtn" style="display: none;">Analyze Image</button>
+                </div>
+
+                <div class="control-group">
+                    <label>Detection Threshold: <span class="value-display" id="thresholdValue">0.5</span></label>
+                    <input type="range" id="threshold" min="0.1" max="1" step="0.1" value="0.5" onchange="updateThreshold()">
+                </div>
+
+                <div class="control-group">
+                    <label>Min. Crack Area (pixels²): <span class="value-display" id="minAreaValue">50</span></label>
+                    <input type="range" id="minArea" min="10" max="500" step="10" value="50" onchange="updateMinArea()">
+                </div>
+
+                <div class="control-group">
+                    <label>Processing FPS: <span class="value-display" id="fpsValue">10</span></label>
+                    <input type="range" id="fps" min="5" max="30" step="5" value="10" onchange="updateFPS()">
+                </div>
+            </div>
+
+            <!-- Right Panel: Results and GPS -->
+            <div class="panel">
+                <h2>📊 Analysis Results</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Cracks Detected</h3>
+                        <p id="crackCount">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Area (px²)</h3>
+                        <p id="totalArea">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Width (px)</h3>
+                        <p id="avgWidth">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Severity</h3>
+                        <p id="severity">-</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 25px; margin-bottom: 10px; color: #495057;">Recent Detections</h3>
+                <div class="detection-list" id="detectionList">
+                    <p style="color: #6c757d; text-align: center;">No detections yet</p>
+                </div>
+
+                <h2 style="margin-top: 30px;">📍 GPS Logging</h2>
+
+                <div class="gps-status inactive" id="gpsStatus">
+                    <strong>GPS Status:</strong> <span id="gpsStatusText">Inactive</span><br>
+                    <span id="gpsCoords" style="font-size: 0.9em; color: #6c757d;"></span>
+                </div>
+
+                <button onclick="toggleGPS()" id="gpsBtn" class="btn-success">Enable GPS</button>
+                <button onclick="logGPSPoint()" id="logBtn" class="btn-secondary" disabled>Log GPS Point</button>
+
+                <div class="gps-points-list" id="gpsPointsList" style="display: none;"></div>
+
+                <h3 style="margin-top: 25px; margin-bottom: 10px; color: #495057;">Export Data</h3>
+                <button onclick="exportJSON()">Export JSON</button>
+                <button onclick="exportCSV()">Export GPS CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let video, canvas, ctx;
+        let isDetecting = false;
+        let detectionInterval;
+        let threshold = 0.5;
+        let minArea = 50;
+        let fps = 10;
+        let detections = [];
+        let gpsEnabled = false;
+        let gpsWatchId = null;
+        let currentPosition = null;
+        let gpsPoints = [];
+        let sessionStart = new Date();
+        let frameCount = 0;
+        let currentMode = 'camera';
+        let uploadedImage = null;
+
+        // Initialize
+        window.onload = function() {
+            video = document.getElementById('videoElement');
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+
+            // Request camera access
+            initCamera();
+        };
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Camera access denied. Please allow camera access or use Upload Mode.');
+                switchMode('upload');
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            if (mode === 'camera') {
+                document.getElementById('cameraMode').style.display = 'block';
+                document.getElementById('uploadMode').style.display = 'none';
+                document.getElementById('cameraModeBtn').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                document.getElementById('uploadModeBtn').style.background = '#6c757d';
+                if (isDetecting) toggleDetection();
+            } else {
+                document.getElementById('cameraMode').style.display = 'none';
+                document.getElementById('uploadMode').style.display = 'block';
+                document.getElementById('uploadModeBtn').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                document.getElementById('cameraModeBtn').style.background = '#6c757d';
+                if (isDetecting) toggleDetection();
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    uploadedImage = img;
+                    const uploadCanvas = document.getElementById('uploadCanvas');
+                    uploadCanvas.width = img.width;
+                    uploadCanvas.height = img.height;
+                    const uploadCtx = uploadCanvas.getContext('2d');
+                    uploadCtx.drawImage(img, 0, 0);
+                    uploadCanvas.style.display = 'block';
+                    document.getElementById('analyzeBtn').style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeUploadedImage() {
+            if (!uploadedImage) return;
+
+            const uploadCanvas = document.getElementById('uploadCanvas');
+            const uploadCtx = uploadCanvas.getContext('2d');
+
+            // Process the image
+            const imageData = uploadCtx.getImageData(0, 0, uploadCanvas.width, uploadCanvas.height);
+            const result = detectCracks(imageData);
+
+            // Draw results
+            uploadCtx.putImageData(result.imageData, 0, 0);
+
+            // Update stats
+            updateStats(result.cracks);
+
+            // Log detection
+            addDetection(result.cracks);
+        }
+
+        function toggleDetection() {
+            isDetecting = !isDetecting;
+            const btn = document.getElementById('toggleBtn');
+
+            if (isDetecting) {
+                btn.textContent = 'Stop Detection';
+                btn.classList.add('btn-danger');
+                canvas.style.display = 'block';
+                video.style.display = 'none';
+                startDetection();
+            } else {
+                btn.textContent = 'Start Detection';
+                btn.classList.remove('btn-danger');
+                canvas.style.display = 'none';
+                video.style.display = 'block';
+                stopDetection();
+            }
+        }
+
+        function startDetection() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            detectionInterval = setInterval(() => {
+                processFrame();
+            }, 1000 / fps);
+        }
+
+        function stopDetection() {
+            clearInterval(detectionInterval);
+        }
+
+        function processFrame() {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            const startTime = performance.now();
+            const result = detectCracks(imageData);
+            const endTime = performance.now();
+
+            ctx.putImageData(result.imageData, 0, 0);
+
+            frameCount++;
+            updateStats(result.cracks);
+
+            if (result.cracks.length > 0) {
+                addDetection(result.cracks);
+            }
+        }
+
+        function detectCracks(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+
+            // Convert to grayscale
+            const gray = new Uint8ClampedArray(width * height);
+            for (let i = 0; i < data.length; i += 4) {
+                const idx = i / 4;
+                gray[idx] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            }
+
+            // Sobel edge detection
+            const edges = sobelEdgeDetection(gray, width, height);
+
+            // Threshold
+            const binary = new Uint8ClampedArray(width * height);
+            const thresholdValue = threshold * 255;
+            for (let i = 0; i < edges.length; i++) {
+                binary[i] = edges[i] > thresholdValue ? 255 : 0;
+            }
+
+            // Morphological operations (dilation to connect edges)
+            const dilated = dilate(binary, width, height);
+
+            // Find connected components (cracks)
+            const cracks = findConnectedComponents(dilated, width, height);
+
+            // Visualize results
+            for (let i = 0; i < data.length; i += 4) {
+                const idx = i / 4;
+                data[i] = gray[idx];
+                data[i + 1] = gray[idx];
+                data[i + 2] = gray[idx];
+
+                // Highlight cracks in red
+                if (dilated[idx] === 255) {
+                    data[i] = 255;
+                    data[i + 1] = 0;
+                    data[i + 2] = 0;
+                }
+            }
+
+            return { imageData, cracks };
+        }
+
+        function sobelEdgeDetection(gray, width, height) {
+            const edges = new Uint8ClampedArray(width * height);
+            const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let gx = 0, gy = 0;
+
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = (y + ky) * width + (x + kx);
+                            const kidx = (ky + 1) * 3 + (kx + 1);
+                            gx += gray[idx] * sobelX[kidx];
+                            gy += gray[idx] * sobelY[kidx];
+                        }
+                    }
+
+                    const magnitude = Math.sqrt(gx * gx + gy * gy);
+                    edges[y * width + x] = Math.min(255, magnitude);
+                }
+            }
+
+            return edges;
+        }
+
+        function dilate(binary, width, height) {
+            const result = new Uint8ClampedArray(width * height);
+            const kernel = 3; // 3x3 kernel
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let maxVal = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = (y + ky) * width + (x + kx);
+                            maxVal = Math.max(maxVal, binary[idx]);
+                        }
+                    }
+                    result[y * width + x] = maxVal;
+                }
+            }
+
+            return result;
+        }
+
+        function findConnectedComponents(binary, width, height) {
+            const visited = new Uint8ClampedArray(width * height);
+            const cracks = [];
+
+            function floodFill(x, y, component) {
+                const stack = [[x, y]];
+
+                while (stack.length > 0) {
+                    const [cx, cy] = stack.pop();
+                    const idx = cy * width + cx;
+
+                    if (cx < 0 || cx >= width || cy < 0 || cy >= height) continue;
+                    if (visited[idx] || binary[idx] === 0) continue;
+
+                    visited[idx] = 1;
+                    component.pixels.push([cx, cy]);
+
+                    stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+                }
+            }
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = y * width + x;
+                    if (binary[idx] === 255 && !visited[idx]) {
+                        const component = { pixels: [] };
+                        floodFill(x, y, component);
+
+                        if (component.pixels.length >= minArea) {
+                            const area = component.pixels.length;
+                            const width = calculateWidth(component.pixels);
+                            cracks.push({ area, width, pixels: component.pixels });
+                        }
+                    }
+                }
+            }
+
+            return cracks;
+        }
+
+        function calculateWidth(pixels) {
+            if (pixels.length === 0) return 0;
+
+            const xs = pixels.map(p => p[0]);
+            const ys = pixels.map(p => p[1]);
+
+            const minX = Math.min(...xs);
+            const maxX = Math.max(...xs);
+            const minY = Math.min(...ys);
+            const maxY = Math.max(...ys);
+
+            return Math.min(maxX - minX, maxY - minY);
+        }
+
+        function updateStats(cracks) {
+            const totalArea = cracks.reduce((sum, c) => sum + c.area, 0);
+            const avgWidth = cracks.length > 0 ? cracks.reduce((sum, c) => sum + c.width, 0) / cracks.length : 0;
+
+            document.getElementById('crackCount').textContent = cracks.length;
+            document.getElementById('totalArea').textContent = totalArea;
+            document.getElementById('avgWidth').textContent = Math.round(avgWidth);
+
+            let severity = '-';
+            let severityClass = '';
+            if (totalArea > 5000) {
+                severity = 'HIGH';
+                severityClass = 'severity-high';
+            } else if (totalArea > 1000) {
+                severity = 'MEDIUM';
+                severityClass = 'severity-medium';
+            } else if (totalArea > 0) {
+                severity = 'LOW';
+                severityClass = 'severity-low';
+            }
+
+            const severityEl = document.getElementById('severity');
+            severityEl.textContent = severity;
+            severityEl.className = severityClass;
+        }
+
+        function addDetection(cracks) {
+            if (cracks.length === 0) return;
+
+            const timestamp = new Date().toLocaleString();
+            const totalArea = cracks.reduce((sum, c) => sum + c.area, 0);
+
+            const detection = {
+                timestamp,
+                crackCount: cracks.length,
+                totalArea,
+                gps: currentPosition ? {
+                    lat: currentPosition.coords.latitude,
+                    lng: currentPosition.coords.longitude,
+                    accuracy: currentPosition.coords.accuracy
+                } : null
+            };
+
+            detections.unshift(detection);
+            if (detections.length > 5) detections.pop();
+
+            updateDetectionList();
+
+            // Auto-log GPS if enabled
+            if (gpsEnabled && currentPosition) {
+                logGPSPoint();
+            }
+        }
+
+        function updateDetectionList() {
+            const list = document.getElementById('detectionList');
+
+            if (detections.length === 0) {
+                list.innerHTML = '<p style="color: #6c757d; text-align: center;">No detections yet</p>';
+                return;
+            }
+
+            list.innerHTML = detections.map(d => `
+                <div class="detection-item">
+                    <strong>${d.timestamp}</strong><br>
+                    Cracks: ${d.crackCount} | Area: ${d.totalArea}px²<br>
+                    ${d.gps ? `GPS: ${d.gps.lat.toFixed(6)}, ${d.gps.lng.toFixed(6)}` : 'No GPS'}
+                </div>
+            `).join('');
+        }
+
+        function toggleGPS() {
+            gpsEnabled = !gpsEnabled;
+            const btn = document.getElementById('gpsBtn');
+            const logBtn = document.getElementById('logBtn');
+            const status = document.getElementById('gpsStatus');
+
+            if (gpsEnabled) {
+                btn.textContent = 'Disable GPS';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-danger');
+                logBtn.disabled = false;
+                status.classList.remove('inactive');
+                status.classList.add('active');
+                document.getElementById('gpsStatusText').textContent = 'Acquiring...';
+
+                gpsWatchId = navigator.geolocation.watchPosition(
+                    position => {
+                        currentPosition = position;
+                        document.getElementById('gpsStatusText').textContent = 'Active';
+                        document.getElementById('gpsCoords').textContent =
+                            `Lat: ${position.coords.latitude.toFixed(6)}, ` +
+                            `Lng: ${position.coords.longitude.toFixed(6)} ` +
+                            `(±${Math.round(position.coords.accuracy)}m)`;
+                    },
+                    error => {
+                        alert('GPS error: ' + error.message);
+                        toggleGPS();
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0 }
+                );
+            } else {
+                btn.textContent = 'Enable GPS';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-success');
+                logBtn.disabled = true;
+                status.classList.remove('active');
+                status.classList.add('inactive');
+                document.getElementById('gpsStatusText').textContent = 'Inactive';
+                document.getElementById('gpsCoords').textContent = '';
+
+                if (gpsWatchId) {
+                    navigator.geolocation.clearWatch(gpsWatchId);
+                    gpsWatchId = null;
+                }
+            }
+        }
+
+        function logGPSPoint() {
+            if (!currentPosition) return;
+
+            const point = {
+                timestamp: new Date().toISOString(),
+                latitude: currentPosition.coords.latitude,
+                longitude: currentPosition.coords.longitude,
+                accuracy: currentPosition.coords.accuracy,
+                altitude: currentPosition.coords.altitude,
+                heading: currentPosition.coords.heading,
+                crackCount: parseInt(document.getElementById('crackCount').textContent),
+                totalArea: parseInt(document.getElementById('totalArea').textContent)
+            };
+
+            gpsPoints.push(point);
+            updateGPSPointsList();
+        }
+
+        function updateGPSPointsList() {
+            const list = document.getElementById('gpsPointsList');
+
+            if (gpsPoints.length === 0) {
+                list.style.display = 'none';
+                return;
+            }
+
+            list.style.display = 'block';
+            list.innerHTML = '<strong>GPS Points Logged: ' + gpsPoints.length + '</strong><br><br>' +
+                gpsPoints.slice(-10).reverse().map((p, i) => `
+                    <div class="gps-point-item">
+                        Point ${gpsPoints.length - i}: ${new Date(p.timestamp).toLocaleString()}<br>
+                        ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)} | Cracks: ${p.crackCount}
+                    </div>
+                `).join('');
+        }
+
+        function exportJSON() {
+            const data = {
+                session: {
+                    start: sessionStart.toISOString(),
+                    end: new Date().toISOString(),
+                    frameCount: frameCount,
+                    mode: currentMode
+                },
+                settings: {
+                    threshold,
+                    minArea,
+                    fps
+                },
+                detections: detections,
+                gpsPoints: gpsPoints
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `crack_detection_${Date.now()}.json`;
+            a.click();
+        }
+
+        function exportCSV() {
+            if (gpsPoints.length === 0) {
+                alert('No GPS points to export');
+                return;
+            }
+
+            let csv = 'Timestamp,Latitude,Longitude,Accuracy,Altitude,Heading,CrackCount,TotalArea\n';
+
+            gpsPoints.forEach(p => {
+                csv += `${p.timestamp},${p.latitude},${p.longitude},${p.accuracy},${p.altitude || ''},${p.heading || ''},${p.crackCount},${p.totalArea}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gps_points_${Date.now()}.csv`;
+            a.click();
+        }
+
+        function updateThreshold() {
+            threshold = parseFloat(document.getElementById('threshold').value);
+            document.getElementById('thresholdValue').textContent = threshold.toFixed(1);
+        }
+
+        function updateMinArea() {
+            minArea = parseInt(document.getElementById('minArea').value);
+            document.getElementById('minAreaValue').textContent = minArea;
+        }
+
+        function updateFPS() {
+            fps = parseInt(document.getElementById('fps').value);
+            document.getElementById('fpsValue').textContent = fps;
+
+            if (isDetecting) {
+                stopDetection();
+                startDetection();
+            }
+        }
+    </script>
+</body>
+</html>
