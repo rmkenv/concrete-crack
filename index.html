@@ -176,6 +176,14 @@
             border-radius: 10px;
         }
 
+        #uploadCanvas {
+            max-width: 100%;
+            height: auto;
+            display: none;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -271,6 +279,7 @@
             text-align: center;
             cursor: pointer;
             transition: background 0.3s;
+            margin-bottom: 20px;
         }
 
         .upload-area:hover {
@@ -340,7 +349,7 @@
                         <p style="font-size: 1.2em; color: #667eea;">📁 Click to upload image</p>
                         <p style="color: #6c757d; margin-top: 10px;">Supports JPG, PNG formats</p>
                     </div>
-                    <canvas id="uploadCanvas" style="margin-top: 20px;"></canvas>
+                    <canvas id="uploadCanvas"></canvas>
                     <button onclick="analyzeUploadedImage()" id="analyzeBtn" style="display: none;">Analyze Image</button>
                 </div>
 
@@ -475,10 +484,15 @@
                 img.onload = function() {
                     uploadedImage = img;
                     const uploadCanvas = document.getElementById('uploadCanvas');
-                    uploadCanvas.width = img.width;
-                    uploadCanvas.height = img.height;
+
+                    // Constrain to max 800px width while maintaining aspect ratio
+                    const maxWidth = 800;
+                    const scale = Math.min(1, maxWidth / img.width);
+                    uploadCanvas.width = img.width * scale;
+                    uploadCanvas.height = img.height * scale;
+
                     const uploadCtx = uploadCanvas.getContext('2d');
-                    uploadCtx.drawImage(img, 0, 0);
+                    uploadCtx.drawImage(img, 0, 0, uploadCanvas.width, uploadCanvas.height);
                     uploadCanvas.style.display = 'block';
                     document.getElementById('analyzeBtn').style.display = 'block';
                 };
@@ -752,7 +766,7 @@
             updateDetectionList();
 
             // Auto-log GPS if enabled
-            if (gpsEnabled && currentPosition) {
+            if (gpsEnabled && currentPosition && currentMode === 'camera') {
                 logGPSPoint();
             }
         }
